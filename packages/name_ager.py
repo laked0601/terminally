@@ -1,11 +1,10 @@
 class name_ager():
     correct = False
-    correct_name_age = ("Name","69")
+    correct_name_age = ("name","204")
+    ROOT = None
     @staticmethod
-    def verify(name, age):
-        print(name,type(name),age,type(age))
-        print(name_ager.correct_name_age)
+    def verify_name_age_is_name_204(name, age):
         if (name,age) == name_ager.correct_name_age:
-            print("Age supplied was correct")
+            name_ager.ROOT.maintab.output("Age supplied was correct")
         else:
-            print("Age supplied was wrong")
+            name_ager.ROOT.maintab.output("Age supplied was wrong")
