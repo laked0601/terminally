@@ -1,14 +1,16 @@
-from tkinter import Tk, ttk, Frame, Entry, X, Y, BOTH, LEFT, RIGHT, BOTTOM, TOP, PhotoImage, Button
+from tkinter import Tk, ttk, Frame, Label, Entry, X, Y, BOTH, LEFT, RIGHT, BOTTOM, TOP, PhotoImage, Button
+from os import path
+
 class base_window(Tk):
     class toptab_class():
         def __init__(self, rootobj):
             self.rootobj = rootobj
             self.toptab = Frame(rootobj)
-            self.nameframe = Frame(self.toptab, bg=rootobj.STYLES["TOP_TAB"], height=32)
-            ttk.Label(self.nameframe, text=rootobj.APPLICATION_NAME, font=(rootobj.STYLES["FONT"], 18)).pack(side=LEFT, padx=(0, 16))
+            self.nameframe = Frame(self.toptab, bg=rootobj.STYLES["toptab"]["color"], height=32)
+            Label(self.nameframe, bg=rootobj.STYLES["toptab"]["color"], fg=rootobj.STYLES["title"]["color"],text=rootobj.APPLICATION_NAME, font=(rootobj.STYLES["title"]["font"], rootobj.STYLES["title"]["size"])).pack(side=LEFT, padx=(0, 16))
             Button(self.nameframe, command=lambda: self.rootobj.clear(), text="Clear Text", width=8).pack(side=LEFT)
             self.nameframe.pack(fill=X)
-            self.procedures_tab = Frame(self.toptab, bg=rootobj.STYLES["TOP_TAB"], height=80)
+            self.procedures_tab = Frame(self.toptab, bg=rootobj.STYLES["toptab"]["color"], height=80)
             self.procedures_tab.pack(fill=X)
             self.toptab.pack(fill=BOTH)
             for classname, classobj in rootobj.CLASSES.items():
@@ -37,7 +39,7 @@ class base_window(Tk):
     class sidebar_class():
         def __init__(self,rootobj):
             self.rootobj = rootobj
-            self.sidebar = Frame(self.rootobj, bg=rootobj.STYLES["SIDEBAR"], width=234)
+            self.sidebar = Frame(self.rootobj, bg=rootobj.STYLES["sidebar"]["color"], width=234)
             self.sidebar.pack(fill=BOTH, side=LEFT, expand=False)
         def add_methods(self,classobj):
             i = 0
@@ -66,7 +68,7 @@ class base_window(Tk):
     class maintab_class():
         def __init__(self,rootobj):
             self.rootobj = rootobj
-            self.maintab = Frame(self.rootobj, width=608)
+            self.maintab = Frame(self.rootobj, bg=rootobj.STYLES["maintab"]["color"], width=608)
             self.maintab.pack(fill=BOTH, side=LEFT, expand=True)
             self.statement_queue = []
         def run_function(self,funcobj):
@@ -80,22 +82,20 @@ class base_window(Tk):
                 self.rootobj.awaiting_user_input = True
         def output(self,*output_obj):
             if len(output_obj) != 0:
-                print(len(self.statement_queue), self.maintab.winfo_height())
+                for widget in self.maintab.winfo_children():
+                    widget.destroy()
                 for obj in output_obj:
-                    for widget in self.maintab.winfo_children():
-                        widget.destroy()
-                    while len(self.statement_queue) > self.maintab.winfo_height() // 20:
-                        self.statement_queue.pop(0)
-                    self.statement_queue.append(str(obj))
-                    for smt in self.statement_queue:
-                        lbl = ttk.Label(self.maintab,text=smt)
-                        lbl.pack(fill=BOTH)
+                    for line in str(obj).split('\n'):
+                        self.statement_queue.append(line)
+                while len(self.statement_queue) > self.maintab.winfo_height() // 20:
+                    self.statement_queue.pop(0)
+                for smt in self.statement_queue:
+                    Label(self.maintab, bg=self.rootobj.STYLES["maintab"]["color"], text=smt, anchor='w').pack(fill=BOTH)
         def submit(self,funcobj):
             user_input_list = [x.get() for x in self.button_list]
             try:
                 res = funcobj(*user_input_list)
                 if res is not None:
-                    print("true")
                     self.output(repr(res))
             except Exception as e:
                 self.output(repr(e))
@@ -109,20 +109,50 @@ class base_window(Tk):
             self.rootobj.awaiting_user_input = True
             self.button_list = []
             for arg in argument_names:
-                lbl = ttk.Label(self.maintab,text=arg)
-                ent = Entry(self.maintab,width=16)
+                Label(self.maintab,text=arg,bg=self.rootobj.STYLES["maintab"]["color"]).pack()
+                ent = Entry(self.maintab,width=32)
                 ent.pack()
-                lbl.pack()
                 self.button_list.append(ent)
             Button(self.maintab, command=lambda x=funcobj: self.submit(x), text="submit",width=8).pack()
             Button(self.maintab, command=lambda :self.cancel(), text="cancel", width=8).pack()
-    def __init__(self,application_name,classes=None,styles=None):
+    def validate_styles(self,styles):
+        if not isinstance(styles,dict):
+            raise TypeError(f"Styles was passed to terminally as {type(styles)} not dict")
+        generic_template = {
+                "toptab": {
+                    "color": "#69db88"
+                },
+                "sidebar": {
+                    "color": "#a7c0fa",
+                },
+                "maintab": {
+                    "color": "#eaeaea"
+                },
+                "title": {
+                    "font": "Arial",
+                    "size": 22,
+                    "color": "black",
+                }
+            }
+        if styles == {}:
+            self.STYLES = generic_template
+            return
+        for key in generic_template.keys():
+            if key not in styles:
+                styles[key] = generic_template[key]
+            else:
+                for attr in generic_template[key]:
+                    if attr not in styles[key]:
+                        styles[key][attr] = generic_template[key][attr]
+        self.STYLES = generic_template
+    def __init__(self,application_name,classes=None,styles={}):
+        if not path.exists("no_image.png"):
+            with open("no_image.png",'wb') as f:
+                f.write(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00 \x00\x00\x00 \x08\x06\x00\x00\x00szz\xf4\x00\x00\x00\x01sRGB\x00\xae\xce\x1c\xe9\x00\x00\x00\x04gAMA\x00\x00\xb1\x8f\x0b\xfca\x05\x00\x00\x00\tpHYs\x00\x00\x0e\xc4\x00\x00\x0e\xc4\x01\x95+\x0e\x1b\x00\x00\x01oIDATXG\xed\x94OK\xc30\x18\xc6{m\xa1\x94~;\xbd\x88\x1e\xbd\x88\x1el\x15=\xb8\xb3\xe0\x17\x10\xbc\x08\x8a\xe2\xc1a\xe7\x14\xc1\xaf\xe0\xd9\x8b\x8a0\xd4`Y\xed\xd0\xd9&\xedk\x93\xb5\x9b\x9da\xfdc\xea\x0e\xf6\x81\x07\x9a\xe4}\xf3\xfc\x12B%\x98\xb2j\x80\x1a\xa0\x06\x98\x08 \xcb2H\x92\x94\xcb\x8a\xa2\xc4]\xc54\x11\x80n\xbcp\x020s\x98m\nP\x06"\x13\x80\x17\x96x\xbd\x9d\x1e\xab\xaa\xca\\D\xb9\x01\xcc\xf3\x10\x1e_\tx\x18\xc0\x8f|\xf7\x8cS\xe1\x895Mc}y\x95\x1b\xe0\xa9K\x00\x93x!\x12\t\x00\x1e\xd0\x08b\xf6\x80\xc0\xe2~\x87}\xd3\xbe\xbc\x10\x99\x00k-\x0c\xceG\x08A\x18O~S\xc7\xf6Y\xa0aa0\xadO\x98;\n`\xfe8(\x04\x91\x03\x80\x0cOY\xc4\x1bm"\x06\x80nfX\x83S\x15\xb1q\xe6\x8b\x03(c\xb3\x15L\xef\x06\x8c(\x1c\xb9a57\xb0\xdc\xec\xc3\xd6\xc5j\xcaK\xa7n\xaaf\xf3r\xf0b\x85\x02\xac4=\x16\xd6\xb8j\xfc\x00\xa0\xde\xb9\xdeeu\xc8\xf1Y/\xc1\x82\xdf\x00/\x94\xe7D\xb4G\x18\x00/h\xdc\xf7\xce-\xeb\xc1\xc1\xe8\xe7$\x04\x80\x176n\xbb\x8fX}\xcfw\x86s\x7f\x06\xe0z]Vk\xbf#\xd8\xbb\xd9N\xadU\x0e\xd0\xf3\xdeX\x1dzA\xdc\xf5_\x03\xe8\xba\xce6)k\xda\x9f\xa5l\xc4\x8aU\x03\xd4\x00\xff\x1d\x00\xe0\x0b\xa6\xb0[\xed\x08w\x08\xaf\x00\x00\x00\x00IEND\xaeB`\x82')
         super().__init__()
+        self.title(application_name)
         self.APPLICATION_NAME = application_name
-        if styles == None:
-            self.STYLES = {"TOP_TAB": "#69db88", "APPLICATION_NAME": "#69db88", "SIDEBAR": "#a7c0fa", "FONT": "Arial"}
-        else:
-            self.STYLES = styles
+        self.validate_styles(styles)
         self.minsize(800, 500)
         self.images = []
         self.awaiting_user_input = False
