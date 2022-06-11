@@ -37,3 +37,7 @@ A simple gui framework using Tkinter in python. Can run with other python classe
 		
 	
 	5. Start the application by calling *your base_window object*.mainloop(), as it inherits from tkinter Tk
+
+For an example in operation, please see 'main.py'.
+
+In any case I hope you find this useful ;)
