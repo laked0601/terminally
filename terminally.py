@@ -1,4 +1,4 @@
-from tkinter import Tk, ttk, Frame, Label, Entry, X, Y, BOTH, LEFT, RIGHT, BOTTOM, TOP, PhotoImage, Button
+from tkinter import Tk, Frame, Label, Entry, X, Y, BOTH, LEFT, RIGHT, BOTTOM, TOP, END, PhotoImage, Button, Listbox, Scrollbar
 from os import path
 
 class base_window(Tk):
@@ -68,9 +68,13 @@ class base_window(Tk):
     class maintab_class():
         def __init__(self,rootobj):
             self.rootobj = rootobj
-            self.maintab = Frame(self.rootobj, bg=rootobj.STYLES["maintab"]["color"], width=608)
+            self.maintab = Frame(self.rootobj, width=608)
+            self.scrollbar = Scrollbar(self.maintab)
+            self.scrollbar.pack(side=RIGHT,fill=Y)
+            self.statement_queue = Listbox(self.maintab, bg=rootobj.STYLES["maintab"]["color"], yscrollcommand=self.scrollbar.set)
+            self.statement_queue.pack(side=LEFT, fill=BOTH, expand=True)
+            self.scrollbar.config(command=self.statement_queue.yview())
             self.maintab.pack(fill=BOTH, side=LEFT, expand=True)
-            self.statement_queue = []
         def run_function(self,funcobj):
             if self.rootobj.awaiting_user_input:
                 return
@@ -82,15 +86,12 @@ class base_window(Tk):
                 self.rootobj.awaiting_user_input = True
         def output(self,*output_obj):
             if len(output_obj) != 0:
-                for widget in self.maintab.winfo_children():
-                    widget.destroy()
-                for obj in output_obj:
-                    for line in str(obj).split('\n'):
-                        self.statement_queue.append(line)
-                while len(self.statement_queue) > self.maintab.winfo_height() // 20:
-                    self.statement_queue.pop(0)
-                for smt in self.statement_queue:
-                    Label(self.maintab, bg=self.rootobj.STYLES["maintab"]["color"], text=smt, anchor='w').pack(fill=BOTH)
+                for i in output_obj:
+                    self.statement_queue.insert(END, i)
+                qsize = self.statement_queue.size()
+                if qsize > 500:
+                    self.statement_queue.delete(0,qsize-501)
+                self.statement_queue.yview(END)
         def submit(self,funcobj):
             user_input_list = [x.get() for x in self.button_list]
             try:
@@ -100,21 +101,22 @@ class base_window(Tk):
             except Exception as e:
                 self.output(repr(e))
             self.rootobj.awaiting_user_input = False
-            self.rootobj.refresh()
-            self.output('')
+            self.input_frame.destroy()
         def cancel(self):
             self.rootobj.awaiting_user_input = False
-            self.output("Cancelled")
+            self.input_frame.destroy()
         def input(self, argument_names, funcobj):
             self.rootobj.awaiting_user_input = True
+            self.input_frame = Frame(self.maintab, width=96)
             self.button_list = []
             for arg in argument_names:
-                Label(self.maintab,text=arg,bg=self.rootobj.STYLES["maintab"]["color"]).pack()
-                ent = Entry(self.maintab,width=32)
+                Label(self.input_frame,text=arg).pack()
+                ent = Entry(self.input_frame,width=32)
                 ent.pack()
                 self.button_list.append(ent)
-            Button(self.maintab, command=lambda x=funcobj: self.submit(x), text="submit",width=8).pack()
-            Button(self.maintab, command=lambda :self.cancel(), text="cancel", width=8).pack()
+            Button(self.input_frame, command=lambda x=funcobj: self.submit(x), text="submit",width=8).pack()
+            Button(self.input_frame, command=lambda :self.cancel(), text="cancel", width=8).pack()
+            self.input_frame.pack()
     def validate_styles(self,styles):
         if not isinstance(styles,dict):
             raise TypeError(f"Styles was passed to terminally as {type(styles)} not dict")
@@ -126,7 +128,7 @@ class base_window(Tk):
                     "color": "#a7c0fa",
                 },
                 "maintab": {
-                    "color": "#eaeaea"
+                    "color": "#ffffff"
                 },
                 "title": {
                     "font": "Arial",
@@ -192,5 +194,4 @@ class base_window(Tk):
     def clear(self):
         if self.awaiting_user_input:
             return
-        self.maintab.statement_queue = []
-        self.maintab.output('')
+        self.maintab.statement_queue.delete(0,self.maintab.statement_queue.size())
