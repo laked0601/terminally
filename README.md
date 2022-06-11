@@ -1,29 +1,43 @@
 # terminally
-A simple gui framework using Tkinter in python. Can be compiled with other python classes and call the functions included therein.
+A simple gui framework using Tkinter in python. Can run with other python classes and call the functions included therein.
+
+![image](https://user-images.githubusercontent.com/90655952/173206798-86beb5d4-6d5c-4b28-b145-f9fd17f6b62d.png)
 
 -------- HOW TO USE -------
 
-1. The default way of using terminally is by creating a class of static methods to be called by the terminal once in operation.
-"terminally_compiler.py" will read through the python files stored (by default) under "./packages" that you configure and load the contents of the class chosen, and any required external modules for the file, as a string. For example:
+	1. Clone this repository to a location of your choosing.
+	
+	2. In a new python file, import the 'base_window' class from terminally.py
+	
+	3. Create a class of functions of your choosing. Terminally will use any arguments provided in the functions as input required 
+	   by the user. This means that all functions must be staticmethods or the user will be required to provide the self argument 
+	   (which is impossible)
+	
+	4. Create your base_window object and supply the application name, an iterable of the classes to be supplied to the terminal 
+	   (eg a list) and (optionally) a dictionary detailing the style.
+	   
+	4.1 An example of the styling is this:
+		
+		generic_template = {
+                "toptab": {
+                    "color": "#69db88"
+                },
+                "sidebar": {
+                    "color": "#a7c0fa",
+                },
+                "maintab": {
+                    "color": "#ffffff"
+                },
+                "title": {
+                    "font": "Arial",
+                    "size": 22,
+                    "color": "black",
+                }
+            }
+		
+	
+	5. Start the application by calling *your base_window object*.mainloop(), as it inherits from tkinter Tk
 
-![image](https://user-images.githubusercontent.com/90655952/168394304-92af4346-09d4-4c6e-989a-2ef1b682cdf5.png)
+For an example in operation, please see 'main.py'.
 
-![image](https://user-images.githubusercontent.com/90655952/168394592-c76bfc2b-0bca-4ceb-a26a-e64d0558a59d.png)
-
-^ "test.py" will load "from webbrowser import open_new" and the contents of myclass
-
-2. Once loaded, "terminally_compiler.py" will paste the full copy of the loaded files into a copy of "terminally.py" (called "terminally_compiled.py") at the line the exact string "# {COMPILE FROM HERE}" is included:
-
-![image](https://user-images.githubusercontent.com/90655952/168394822-2e84aaaa-358c-4eb5-85b9-073179fadcfc.png)
-
-![image](https://user-images.githubusercontent.com/90655952/168394881-28711bc4-c41f-4087-bb1d-76cf5939f28d.png)
-
-^ and boom, just like that the compiled terminal is ready to go.
-
-For configuration, you also need to update "PROCEDURES" in the base file which is a list of dictionaries that includes the name, icon file path, and class to be used for a procedure in the terminal. And changing "APPLICATION_NAME" will update it to whatever you want the terminal to be called.
-
-The end result of the terminal looks like this:
-
-![image](https://user-images.githubusercontent.com/90655952/168395368-6eb9e01c-c5c6-4df0-bd9f-f32fb9d7e9fa.png)
-
-I hope you find it useful ;)
+In any case I hope you find this useful ;)
